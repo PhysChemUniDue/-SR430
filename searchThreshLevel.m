@@ -14,8 +14,11 @@ function p = searchThreshLevel( vals )
 % Clear SR430
 invoke( obj, 'clear' );
 
+% Set optimal properties (low number of bins)
+obj.BinsPerRecord = 1;
+
 % Preallocate data array
-data = zeros( obj.BinsPerRecord*1024, numel( vals ) );
+data = zeros( 1, numel( vals ) );
 
 % Prepare plot
 figure
@@ -28,10 +31,15 @@ p.LineStyle = '-';
 
 for i=1:numel( vals )
     
+    % Apply new Threshold level
+    obj.DiscrThreshLevel = vals(i);
+    
     % Start Scan
     invoke( obj, 'startScan' );
-    
-    while scanStatus < Nshots
+        
+    % Reset scan status
+    scanStatus = 0;
+    while scanStatus < obj.RecordsPerScan
         % Wait until scans are finished
         
         % Get current number of scans
@@ -43,13 +51,10 @@ for i=1:numel( vals )
     end
     
     % Read data
-    data(:,i) = SR430.readData( obj,obj.BinsPerRecord*1024,0 );
+    data(i) = sum( SR430.readData( obj,obj.BinsPerRecord*1024,0 ) );
 
     % Clear SR430
     invoke( obj, 'clear' );
-    
-    % Reset scan status
-    scanStatus = 0;
     
     % Refresh plot
     p.YData = sum( data,1 );
@@ -58,3 +63,5 @@ end
 
 % Disconnect
 SR430.disconnect( g,obj,0 );
+
+end
